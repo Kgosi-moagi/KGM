@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KGM — Kgosi Moagi · Digital Artisan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;900&family=IM+Fell+English:ital@0;1&family=Libre+Barcode+128+Text&family=JetBrains+Mono:wght@100;300;400;700&family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0805;
+    --vellum: #f5ead8;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --rust: #8b2e16;
+    --cream: #f0ddb8;
+    --dim: #1a120a;
+    --ash: #2a1f14;
+    --cyan-neon: #00f0c8;
+    --red-neon: #ff2244;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink); color: var(--vellum);
+    font-family: 'JetBrains Mono', monospace;
+    overflow-x: hidden; cursor: none;
+  }
+
+  /* CURSOR */
+  .cursor {
+    position: fixed; top: 0; left: 0; width: 12px; height: 12px;
+    background: var(--gold); border-radius: 50%; pointer-events: none;
+    z-index: 9999; transform: translate(-50%,-50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed; top: 0; left: 0; width: 40px; height: 40px;
+    border: 1px solid var(--gold); border-radius: 50%; pointer-events: none;
+    z-index: 9998; transform: translate(-50%,-50%);
+    transition: all 0.15s ease; opacity: 0.5;
+  }
+
+  /* NOISE */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9997; opacity: 0.035;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: linear-gradient(to bottom, rgba(10,8,5,0.97) 0%, transparent 100%);
+  }
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif; font-size: 1.1rem;
+    color: var(--gold); letter-spacing: 0.2em; text-decoration: none; flex-shrink: 0;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.65rem; color: var(--cream); text-decoration: none;
+    letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.7;
+    transition: opacity 0.3s, color 0.3s;
+  }
+  .nav-links a:hover { opacity: 1; color: var(--gold); }
+  .nav-cta {
+    font-size: 0.65rem; border: 1px solid var(--gold); color: var(--gold);
+    padding: 0.5rem 1.2rem; text-transform: uppercase; letter-spacing: 0.15em;
+    background: transparent; cursor: none; transition: all 0.3s;
+    text-decoration: none; flex-shrink: 0;
+  }
+  .nav-cta:hover { background: var(--gold); color: var(--ink); }
+  .nav-burger {
+    display: none; flex-direction: column; gap: 5px;
+    background: none; border: none; cursor: pointer; padding: 4px; z-index: 10;
+  }
+  .nav-burger span { display: block; width: 24px; height: 1.5px; background: var(--gold); transition: all 0.3s; }
+  .nav-burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .nav-burger.open span:nth-child(2) { opacity: 0; }
+  .nav-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .mobile-nav {
+    display: none; position: fixed; inset: 0; background: rgba(10,8,5,0.98);
+    z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem;
+  }
+  .mobile-nav.open { display: flex; }
+  .mobile-nav a {
+    font-family: 'Cinzel', serif; font-size: 1.5rem;
+    color: var(--vellum); text-decoration: none; letter-spacing: 0.2em; text-transform: uppercase;
+    opacity: 0.8; transition: opacity 0.3s, color 0.3s;
+  }
+  .mobile-nav a:last-child { color: var(--gold); }
+  .mobile-nav a:hover { opacity: 1; color: var(--gold); }
+
+  /* BARCODE */
+  .barcode {
+    font-family: 'Libre Barcode 128 Text', cursive;
+    color: var(--gold); opacity: 0.25; pointer-events: none; -webkit-user-select: none; user-select: none;
+  }
+
+  /* GLITCH */
+  @keyframes glitch1 {
+    0%,100%{clip-path:inset(0 0 98% 0);transform:translate(-2px,0)}
+    20%{clip-path:inset(30% 0 50% 0);transform:translate(2px,0)}
+    40%{clip-path:inset(70% 0 10% 0);transform:translate(-1px,0)}
+    60%{clip-path:inset(10% 0 80% 0);transform:translate(3px,0)}
+    80%{clip-path:inset(55% 0 20% 0);transform:translate(-2px,0)}
+  }
+  @keyframes glitch2 {
+    0%,100%{clip-path:inset(50% 0 30% 0);transform:translate(2px,0);opacity:.8}
+    33%{clip-path:inset(20% 0 60% 0);transform:translate(-3px,0)}
+    66%{clip-path:inset(80% 0 5% 0);transform:translate(1px,0)}
+  }
+  @keyframes glitch-skew {
+    0%,100%{transform:skewX(0)} 10%{transform:skewX(-2deg)} 20%{transform:skewX(2deg)} 30%{transform:skewX(-1deg)} 40%{transform:skewX(0)}
+  }
+  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+  @keyframes flicker { 0%,95%,100%{opacity:1} 96%{opacity:.4} 97%{opacity:1} 98%{opacity:.2} 99%{opacity:1} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  .glitch { position:relative; animation:glitch-skew 4s infinite; }
+  .glitch::before,.glitch::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; height:100%; }
+  .glitch::before { color:var(--cyan-neon); animation:glitch1 3s infinite; text-shadow:2px 0 var(--cyan-neon); opacity:.7; }
+  .glitch::after  { color:var(--red-neon);  animation:glitch2 4s infinite; text-shadow:-2px 0 var(--red-neon);  opacity:.6; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh; position: relative; display: flex;
+    flex-direction: column; justify-content: flex-end;
+    padding: 0 3rem 5rem; overflow: hidden;
+  }
+  .hero-bg { position: absolute; inset: 0; overflow: hidden; }
+  .hero-painting {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0.18; filter: sepia(0.6) contrast(1.2);
+    transform: scale(1.05); transition: transform 8s ease;
+  }
+  .hero-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(10,8,5,.88) 0%, rgba(10,8,5,.35) 50%, rgba(10,8,5,.93) 100%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(201,168,76,.04) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(201,168,76,.04) 1px,transparent 1px);
+    background-size: 60px 60px;
+  }
+  .scanline {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(to right, transparent, rgba(201,168,76,.15), transparent);
+    animation: scanline 6s linear infinite; pointer-events: none;
+  }
+  .hero-barcode-top { position: absolute; top: 120px; right: 3rem; font-size: 3rem; writing-mode: vertical-rl; }
+  .hero-barcode-left { position: absolute; bottom: 8rem; left: 1rem; font-size: 2rem; writing-mode: vertical-rl; opacity: 0.15; }
+  .hero-ornament {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: min(600px,90vw); aspect-ratio: 1; pointer-events: none;
+    border: 1px solid rgba(201,168,76,.06); border-radius: 50%;
+  }
+  .hero-ornament::before { content:''; position:absolute; inset:30px; border:1px solid rgba(201,168,76,.04); border-radius:50%; }
+  .hero-label {
+    font-size: 0.65rem; color: var(--gold); letter-spacing: 0.3em;
+    text-transform: uppercase; margin-bottom: 1.5rem; opacity: 0.8;
+    animation: fadeUp 1s ease 0.2s both; position: relative; z-index: 1;
+  }
+  .hero-label span { color: var(--cyan-neon); margin-right: 0.5rem; }
+  .hero-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2.8rem, 9vw, 9rem);
+    font-weight: 900; line-height: 0.9; letter-spacing: -0.02em;
+    color: var(--vellum); margin-bottom: 0.2em;
+    animation: fadeUp 1s ease 0.4s both; position: relative; z-index: 1;
+  }
+  .hero-title .gold { color: var(--gold); }
+  .hero-title .italic { font-family:'Playfair Display',serif; font-style:italic; color:var(--cream); }
+  .hero-subtitle {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(0.9rem,2.5vw,1.6rem); color: var(--gold);
+    opacity: .9; margin-bottom: 2.5rem; letter-spacing: .05em;
+    animation: fadeUp 1s ease 0.6s both; position: relative; z-index: 1;
+  }
+  .hero-meta {
+    display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+    animation: fadeUp 1s ease 0.8s both; position: relative; z-index: 1;
+  }
+  .hero-meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .hero-meta-label { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); opacity: .6; }
+  .hero-meta-val { font-size: .7rem; color: var(--cream); letter-spacing: .08em; }
+  .hero-divider { width: 1px; height: 40px; background: var(--gold); opacity: .3; flex-shrink: 0; }
+  .hero-scroll {
+    position: absolute; bottom: 3rem; right: 3rem;
+    display: flex; flex-direction: column; align-items: center; gap: .5rem;
+    animation: float 3s ease-in-out infinite; z-index: 1;
+  }
+  .hero-scroll span { font-size: .55rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); opacity: .6; }
+  .scroll-line { width: 1px; height: 50px; background: linear-gradient(to bottom, var(--gold), transparent); }
+
+  /* MARQUEE */
+  .marquee-wrap {
+    overflow: hidden; padding: 1.2rem 0;
+    border-top: 1px solid rgba(201,168,76,.15);
+    border-bottom: 1px solid rgba(201,168,76,.15);
+    background: rgba(201,168,76,.03);
+  }
+  .marquee-inner { display: flex; gap: 4rem; width: max-content; animation: marquee 22s linear infinite; white-space: nowrap; }
+  .marquee-item { font-size: .65rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); opacity: .5; display: flex; align-items: center; gap: 1rem; }
+  .marquee-item .dot { width: 4px; height: 4px; background: var(--rust); border-radius: 50%; flex-shrink: 0; }
+  .marquee-barcode { font-family: 'Libre Barcode 128 Text'; font-size: 1.2rem; color: var(--gold); opacity: .3; }
+
+  /* SECTION BASE */
+  section { padding: 7rem 3rem; position: relative; }
+  .section-label {
+    font-size: .6rem; letter-spacing: .4em; text-transform: uppercase;
+    color: var(--gold); opacity: .7; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .section-label::before { content:''; width:30px; height:1px; background:var(--gold); opacity:.5; }
+  .section-title {
+    font-family: 'Cinzel', serif; font-size: clamp(1.8rem,5vw,5rem);
+    font-weight: 900; line-height: 1; letter-spacing: -0.02em;
+    color: var(--vellum); margin-bottom: 0.3em;
+  }
+  .section-title .gold { color: var(--gold); }
+  .section-title .italic { font-family:'Playfair Display',serif; font-style:italic; font-weight:400; font-size:.85em; }
+  .section-intro {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 1.05rem; color: var(--cream); opacity: .75;
+    max-width: 55ch; line-height: 1.7; margin-bottom: 3.5rem;
+  }
+
+  /* PROJECTS */
+  #projects { background: var(--dim); }
+  .projects-tabs { display: flex; margin-bottom: 2.5rem; border-bottom: 1px solid rgba(201,168,76,.2); }
+  .tab-btn {
+    font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--cream); background: none; border: none; padding: .8rem 1.8rem;
+    cursor: none; opacity: .5; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.3s;
+  }
+  .tab-btn.active { opacity: 1; color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-btn:hover { opacity: .8; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .projects-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5px; background: rgba(201,168,76,.1); }
+  .project-card { background: var(--dim); position: relative; overflow: hidden; aspect-ratio: 4/3; cursor: none; }
+  .project-card:first-child { grid-column: span 2; aspect-ratio: auto; min-height: 300px; }
+  .project-img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s ease, filter .7s ease; filter: grayscale(.3) sepia(.2); }
+  .project-card:hover .project-img { transform: scale(1.06); filter: grayscale(0) sepia(0); }
+  .project-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,8,5,.95) 0%, rgba(10,8,5,.05) 60%);
+    display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem;
+  }
+  .project-overlay-full {
+    position: absolute; inset: 0; background: rgba(10,8,5,.87);
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; padding: 2rem;
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .project-card:hover .project-overlay-full { opacity: 1; }
+  .project-num { font-size: .55rem; letter-spacing: .3em; color: var(--gold); text-transform: uppercase; margin-bottom: .5rem; }
+  .project-name { font-family: 'Cinzel',serif; font-size: 1.1rem; font-weight: 600; color: var(--vellum); line-height: 1.2; }
+  .project-tag { font-size: .6rem; letter-spacing: .15em; color: var(--gold); text-transform: uppercase; margin-top: .4rem; opacity: .7; }
+  .project-detail { font-size: .68rem; color: var(--cream); opacity: .8; line-height: 1.7; margin: .8rem 0; max-width: 32ch; }
+  .project-link {
+    font-size: .6rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--cyan-neon); border-bottom: 1px solid var(--cyan-neon);
+    padding-bottom: 2px; text-decoration: none; margin-top: .5rem; display: inline-block;
+  }
+  .project-barcode { position: absolute; top: 1rem; right: 1rem; font-size: 1.4rem; opacity: .13; }
+
+  /* PROCESS */
+  #process { background: var(--ink); border-top: 1px solid rgba(201,168,76,.1); }
+  .process-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; margin-top: 4rem; border: 1px solid rgba(201,168,76,.15); }
+  .process-item {
+    padding: 3rem 2rem; border-right: 1px solid rgba(201,168,76,.1);
+    position: relative; overflow: hidden; cursor: none; transition: background .4s;
+  }
+  .process-item:last-child { border-right: none; }
+  .process-item:hover { background: rgba(201,168,76,.04); }
+  .process-hover-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; filter: sepia(.8) contrast(1.1);
+    transition: opacity .5s ease; z-index: 0;
+  }
+  .process-item:hover .process-hover-img { opacity: 0.12; }
+  .process-content { position: relative; z-index: 1; }
+  .process-num {
+    font-family: 'Cinzel Decorative', serif; font-size: clamp(4rem,7vw,8rem);
+    font-weight: 900; line-height: 1; color: var(--gold); opacity: .13;
+    letter-spacing: -0.05em; display: block; transition: opacity .3s;
+  }
+  .process-item:hover .process-num { opacity: .28; }
+  .process-title { font-family: 'Cinzel',serif; font-size: .85rem; font-weight: 600; color: var(--vellum); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .8rem; }
+  .process-text { font-size: .65rem; color: var(--cream); opacity: .6; line-height: 1.85; letter-spacing: .04em; }
+  .process-barcode { margin-top: 1.5rem; font-size: 1.8rem; opacity: .1; }
+
+  /* REEL */
+  #reel { background: var(--dim); padding: 5rem 0; overflow: hidden; }
+  .reel-inner { display: flex; gap: 1.5px; width: max-content; animation: marquee 30s linear infinite; }
+  .reel-item { width: 320px; height: 200px; flex-shrink: 0; overflow: hidden; position: relative; }
+  .reel-item img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.5) sepia(.3); transition: filter .4s; }
+  .reel-item:hover img { filter: none; }
+  .reel-item-label {
+    position: absolute; bottom: .8rem; left: .8rem;
+    font-size: .55rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--vellum); opacity: .8; background: rgba(10,8,5,.8); padding: .2rem .5rem;
+  }
+
+  /* PHILOSOPHY */
+  #philosophy { background: var(--ash); display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+  .philosophy-img-wrap { position: relative; aspect-ratio: 3/4; }
+  .philosophy-img { width: 100%; height: 100%; object-fit: cover; filter: sepia(.5) contrast(1.1) grayscale(.2); }
+  .philosophy-img-border { position: absolute; inset: -15px; border: 1px solid rgba(201,168,76,.3); pointer-events: none; transform: rotate(2deg); }
+  .philosophy-img-ornament { position: absolute; bottom: -2rem; left: 2rem; font-family: 'Libre Barcode 128 Text'; font-size: 2.5rem; color: var(--gold); opacity: .2; }
+  .philosophy-stats { position: absolute; bottom: 2rem; right: -3rem; background: var(--ink); padding: 1.5rem; border: 1px solid rgba(201,168,76,.2); min-width: 140px; }
+  .stat-num { font-family: 'Cinzel Decorative',serif; font-size: 2.5rem; font-weight: 900; color: var(--gold); display: block; animation: flicker 6s infinite; }
+  .stat-label { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--cream); opacity: .6; }
+  .philosophy-quote {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(1.1rem,2.5vw,2rem); color: var(--gold); line-height: 1.3;
+    margin-bottom: 2rem; position: relative;
+  }
+  .philosophy-quote::before { content:'\201C'; font-size: 6rem; position:absolute; top:-1.5rem; left:-1rem; opacity:.2; color:var(--gold); font-family:'Cinzel',serif; line-height:1; }
+  .philosophy-body { font-size: .7rem; line-height: 2; color: var(--cream); opacity: .7; margin-bottom: 2rem; letter-spacing: .05em; }
+  .philosophy-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .tag { font-size: .55rem; letter-spacing: .2em; text-transform: uppercase; padding: .3rem .8rem; border: 1px solid rgba(201,168,76,.3); color: var(--gold); opacity: .7; }
+
+  /* STACK */
+  #stack { background: var(--ink); border-top: 1px solid rgba(201,168,76,.1); }
+  .stack-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(201,168,76,.08); margin-top: 4rem; }
+  .stack-item { background: var(--ink); padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; gap: .8rem; cursor: none; transition: background .3s; }
+  .stack-item:hover { background: rgba(201,168,76,.05); }
+  .stack-icon { font-size: 1.8rem; opacity: .6; }
+  .stack-name { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--cream); opacity: .6; text-align: center; }
+  .stack-barcode-row { display: flex; gap: 2rem; margin-top: 2rem; justify-content: center; overflow: hidden; flex-wrap: wrap; }
+  .stack-barcode-row span { font-family: 'Libre Barcode 128 Text'; font-size: 3rem; color: var(--gold); opacity: .08; }
+
+  /* CONTACT */
+  #contact {
+    background: var(--ink); text-align: center; padding: 9rem 3rem;
+    border-top: 1px solid rgba(201,168,76,.1); position: relative; overflow: hidden;
+  }
+  #contact::before {
+    content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:700px; height:700px;
+    background:radial-gradient(circle,rgba(201,168,76,.04) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .contact-barcode-bg { position:absolute; inset:0; display:flex; flex-wrap:wrap; overflow:hidden; pointer-events:none; opacity:.03; }
+  .contact-barcode-bg span { font-family:'Libre Barcode 128 Text'; font-size:8rem; color:var(--gold); }
+  .contact-eyebrow {
+    font-size:.6rem; letter-spacing:.4em; text-transform:uppercase;
+    color:var(--gold); opacity:.7; margin-bottom:1.5rem;
+    display:flex; align-items:center; justify-content:center; gap:1rem;
+  }
+  .contact-eyebrow::before,.contact-eyebrow::after { content:''; width:40px; height:1px; background:var(--gold); opacity:.4; }
+  .contact-title {
+    font-family:'Cinzel Decorative',serif;
+    font-size:clamp(2rem,7vw,7rem);
+    font-weight:900; color:var(--vellum); line-height:1;
+    margin-bottom:1.5rem; position:relative; z-index:1;
+  }
+  .contact-sub { font-family:'IM Fell English',serif; font-style:italic; font-size:1.2rem; color:var(--gold); opacity:.8; margin-bottom:3rem; position:relative; z-index:1; }
+  .contact-email { font-size:.75rem; letter-spacing:.2em; color:var(--vellum); text-decoration:none; border-bottom:1px solid rgba(201,168,76,.4); padding-bottom:4px; transition:color .3s,border-color .3s; position:relative; z-index:1; }
+  .contact-email:hover { color:var(--gold); border-color:var(--gold); }
+  .contact-actions { display:flex; align-items:center; justify-content:center; gap:2rem; margin-top:3rem; position:relative; z-index:1; flex-wrap:wrap; }
+  .btn-primary { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; background:var(--gold); color:var(--ink); padding:1rem 2.5rem; border:none; cursor:none; transition:background .3s,transform .2s; text-decoration:none; display:inline-block; }
+  .btn-primary:hover { background:var(--gold-light); transform:translateY(-2px); }
+  .btn-ghost { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; border:1px solid rgba(201,168,76,.4); color:var(--gold); padding:1rem 2.5rem; cursor:none; background:transparent; transition:all .3s; text-decoration:none; display:inline-block; }
+  .btn-ghost:hover { background:rgba(201,168,76,.1); border-color:var(--gold); }
+
+  /* FOOTER */
+  footer { background:var(--ink); padding:2rem 3rem; border-top:1px solid rgba(201,168,76,.1); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+  footer .copy { font-size:.6rem; letter-spacing:.15em; color:var(--cream); opacity:.4; }
+  footer .barcode { font-size:1.5rem; }
+  .social-links { display:flex; gap:1.5rem; flex-wrap:wrap; }
+  .social-links a { font-size:.6rem; letter-spacing:.15em; text-transform:uppercase; color:var(--cream); opacity:.4; text-decoration:none; transition:opacity .3s,color .3s; }
+  .social-links a:hover { opacity:.8; color:var(--gold); }
+
+  /* ORNAMENT */
+  .ornament-divider { display:flex; align-items:center; justify-content:center; gap:1.5rem; padding:2rem 0; opacity:.4; }
+  .ornament-divider::before,.ornament-divider::after { content:''; flex:1; height:1px; background:var(--gold); opacity:.3; }
+  .ornament-symbol { font-family:'Cinzel Decorative',serif; font-size:1.2rem; color:var(--gold); letter-spacing:.3em; }
+
+  /* REVEAL */
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity .8s ease,transform .8s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  .reveal-delay-1 { transition-delay:.1s; }
+  .reveal-delay-2 { transition-delay:.2s; }
+  .reveal-delay-3 { transition-delay:.3s; }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 1024px) {
+    #philosophy { gap: 3.5rem; }
+    .philosophy-stats { right: -1rem; }
+  }
+
+  @media (max-width: 900px) {
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+    nav { padding: 1.1rem 1.5rem; }
+    .nav-links { display: none; }
+    .nav-cta { display: none; }
+    .nav-burger { display: flex; }
+    #hero { padding: 0 1.5rem 4rem; }
+    .hero-barcode-top, .hero-barcode-left { display: none; }
+    .hero-title { font-size: clamp(2.4rem,11vw,5rem); }
+    .hero-meta { gap: 1.5rem; }
+    .hero-divider { display: none; }
+    .hero-scroll { right: 1.5rem; bottom: 2rem; }
+    section { padding: 5rem 1.5rem; }
+    /* Projects */
+    .projects-grid { grid-template-columns: 1fr 1fr; }
+    .project-card:first-child { grid-column: span 2; min-height: 260px; }
+    /* Always show overlay on mobile */
+    .project-overlay-full { opacity: 1 !important; background: rgba(10,8,5,.75); justify-content: flex-end; padding: 1.2rem; }
+    /* Process */
+    .process-grid { grid-template-columns: 1fr 1fr; }
+    .process-item { border-right: none; border-bottom: 1px solid rgba(201,168,76,.1); }
+    .process-item:nth-child(odd) { border-right: 1px solid rgba(201,168,76,.1); }
+    .process-item:nth-last-child(-n+2) { border-bottom: none; }
+    /* Philosophy */
+    #philosophy { grid-template-columns: 1fr; gap: 3rem; padding: 5rem 1.5rem; }
+    .philosophy-img-wrap { max-width: 360px; margin: 0 auto; }
+    .philosophy-stats { right: 0; }
+    /* Stack */
+    .stack-grid { grid-template-columns: repeat(4,1fr); }
+    /* Reel */
+    .reel-item { width: 260px; height: 165px; }
+    /* Footer */
+    footer { padding: 1.5rem; }
+    footer .barcode { display: none; }
+    /* Contact */
+    #contact { padding: 6rem 1.5rem; }
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.2rem; }
+    .nav-logo { font-size: 0.9rem; }
+    #hero { padding: 0 1.2rem 3.5rem; }
+    .hero-title { font-size: clamp(2rem,12vw,3.5rem); }
+    .hero-subtitle { font-size: 0.9rem; }
+    .hero-meta { flex-direction: column; gap: .8rem; align-items: flex-start; }
+    .hero-divider { display: none; }
+    section { padding: 4rem 1.2rem; }
+    /* Projects single column */
+    .projects-grid { grid-template-columns: 1fr; }
+    .project-card:first-child { grid-column: span 1; min-height: 240px; }
+    .project-card { aspect-ratio: 4/3; }
+    .projects-tabs { overflow-x: auto; }
+    .tab-btn { font-size: .55rem; padding: .7rem .9rem; white-space: nowrap; }
+    /* Process single column */
+    .process-grid { grid-template-columns: 1fr; }
+    .process-item { border-right: none !important; border-bottom: 1px solid rgba(201,168,76,.1); }
+    .process-item:last-child { border-bottom: none; }
+    .process-num { font-size: 5rem; }
+    /* Stack 2 cols */
+    .stack-grid { grid-template-columns: repeat(2,1fr); }
+    /* Philosophy */
+    .philosophy-img-wrap { max-width: 100%; }
+    .philosophy-img-border { display: none; }
+    .philosophy-stats { position: static; margin-top: 1.5rem; }
+    /* Contact */
+    #contact { padding: 5rem 1.2rem; }
+    .contact-title { font-size: clamp(1.8rem,9vw,3rem); }
+    .contact-actions { flex-direction: column; align-items: stretch; }
+    .btn-primary, .btn-ghost { text-align: center; }
+    /* Footer */
+    footer { flex-direction: column; align-items: flex-start; }
+    .social-links { gap: 1rem; }
+    /* Reel */
+    .reel-item { width: 200px; height: 130px; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <a href="#projects" onclick="closeMobileNav()">Work</a>
+  <a href="#process" onclick="closeMobileNav()">Process</a>
+  <a href="#philosophy" onclick="closeMobileNav()">About</a>
+  <a href="#stack" onclick="closeMobileNav()">Stack</a>
+  <a href="#contact" onclick="closeMobileNav()">Commission</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">KGM</a>
+  <ul class="nav-links">
+    <li><a href="#projects">Work</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#philosophy">About</a></li>
+    <li><a href="#stack">Stack</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Commission</a>
+  <button class="nav-burger" id="burger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-bg">
+    <img class="hero-painting" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg" alt="renaissance">
+    <div class="hero-grid"></div>
+    <div class="scanline"></div>
+  </div>
+  <div class="hero-ornament"></div>
+  <div class="barcode hero-barcode-top">KGM_PORTFOLIO_2025_v1.0</div>
+  <div class="barcode hero-barcode-left">WEB.CRAFT.ART.CODE.DESIGN</div>
+  <p class="hero-label"><span>//</span> Kgosi Moagi · Digital Artisan</p>
+  <h1 class="hero-title">
+    <span class="glitch" data-text="CRAFTING">CRAFTING</span><br>
+    <span class="italic gold">Digital</span><br>
+    <span>MASTERS</span>
+  </h1>
+  <p class="hero-subtitle">Where the Renaissance mind meets the digital frontier</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Available for</span>
+      <span class="hero-meta-val">PROJECTS_2026</span>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Based in</span>
+      <span class="hero-meta-val">South Africa · GMT+2</span>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Contact</span>
+      <span class="hero-meta-val">kgmwebsite@gmail.com</span>
+    </div>
+  </div>
+  <div class="hero-scroll"><span>Scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-inner">
+    <span class="marquee-item"><span class="dot"></span> Web Design <span class="marquee-barcode">KGM2025</span></span>
+    <span class="marquee-item"><span class="dot"></span> UI/UX <span class="marquee-barcode">KGOSI</span></span>
+    <span class="marquee-item"><span class="dot"></span> Creative Development <span class="marquee-barcode">AWARD</span></span>
+    <span class="marquee-item"><span class="dot"></span> Motion <span class="marquee-barcode">DIGITAL</span></span>
+    <span class="marquee-item"><span class="dot"></span> Branding <span class="marquee-barcode">RENAISSANCE</span></span>
+    <span class="marquee-item"><span class="dot"></span> Frontend Architecture <span class="marquee-barcode">CRAFT</span></span>
+    <span class="marquee-item"><span class="dot"></span> Web Design <span class="marquee-barcode">KGM2025</span></span>
+    <span class="marquee-item"><span class="dot"></span> UI/UX <span class="marquee-barcode">KGOSI</span></span>
+    <span class="marquee-item"><span class="dot"></span> Creative Development <span class="marquee-barcode">AWARD</span></span>
+    <span class="marquee-item"><span class="dot"></span> Motion <span class="marquee-barcode">DIGITAL</span></span>
+    <span class="marquee-item"><span class="dot"></span> Branding <span class="marquee-barcode">RENAISSANCE</span></span>
+    <span class="marquee-item"><span class="dot"></span> Frontend Architecture <span class="marquee-barcode">CRAFT</span></span>
+  </div>
+</div>
+
+<!-- ══ PROJECTS ══ -->
+<section id="projects">
+  <div class="section-label">002 · Selected Works</div>
+  <h2 class="section-title reveal">Commissioned <span class="italic gold">Masterworks</span></h2>
+  <p class="section-intro reveal reveal-delay-1">Each project, a painting; each pixel, a brushstroke. Executed with obsessive precision across the digital canvas.</p>
+
+  <div class="projects-tabs reveal">
+    <button class="tab-btn active" onclick="switchTab('designs',this)">01 · Web Designs</button>
+    <button class="tab-btn" onclick="switchTab('websites',this)">02 · Live Websites</button>
+  </div>
+
+  <!-- DESIGNS -->
+  <div id="tab-designs" class="tab-content active">
+    <div class="projects-grid">
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" alt="Aurum">
+        <div class="project-overlay">
+          <div class="project-num">PROJ_001 · 2025</div>
+          <div class="project-name">The Artisans Vault</div>
+          <div class="project-tag">Luxury Store · E-Commerce · live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">PROJ_001 · 2025</div>
+          <div class="project-name">The Artisans Vault</div>
+          <p class="project-detail">A luxury designer item store with editorial product presentation and a refined, minimal aesthetic.</p>
+          <a href="https://www.figma.com/design/z6NmMxjqF9bZ4BI0pyWTEM/HIGH-FIDELITY?m=auto&t=BKXK8ydOrtGRyFnm-6" target="_blank" rel="noopener noreferrer" class="project-link">View Design →</a>
+        </div>
+        <div class="barcode project-barcode">TheArtisansVault</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1557952138-7ed256c23bc5?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Freshbites-Bakery">
+        <div class="project-overlay">
+          <div class="project-num">PROJ_002 · 2025</div>
+          <div class="project-name">Freshbites Bakery</div>
+          <div class="project-tag">Storefront · Identity · Design</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">PROJ_002 · 2025</div>
+          <div class="project-name">Freshbites Bakery</div>
+          <p class="project-detail">Great bakery elevated. Warm, ingredient-forward, editorial layout with seamless order flow.</p>
+          <a href="https://www.figma.com/design/ikCQYmP4EgHukwiWnIdLG9/freshbites-backery?node-id=0-1&p=f&t=HL0OS5HToziu5nAL-0" target="_blank" rel="noopener noreferrer" class="project-link">View Design →</a>
+        </div>
+        <div class="barcode project-barcode">FreshbitesBakery</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://cdn.cosmos.so/e2f9ad7d-2c8c-4293-9987-a7a3f3b4f8c3?format=jpeg" alt="Volta">
+        <div class="project-overlay">
+          <div class="project-num">PROJ_003 · 2026</div>
+          <div class="project-name">Shades of Gold</div>
+          <div class="project-tag">Venue · Escape · Design</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">PROJ_003 · 2026</div>
+          <div class="project-name">Shades of Gold</div>
+          <p class="project-detail">Elegent grid meets digital refinement. Spatial storytelling for a prestige architecture firm.</p>
+          <a href="https://www.figma.com/design/n0ermcvJ5tIqdbXGdPKKWQ/Shades-of-Gold?node-id=0-1&p=f&t=xcBjo8moOZxGdhlJ-0" target="_blank" rel="noopener noreferrer" class="project-link">View Design →</a>
+        </div>
+        <div class="barcode project-barcode">ShadesofGold</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://cdn.cosmos.so/6e7d8220-1245-46d0-b157-8738245c1e9b?format=jpeg" alt="Ether">
+        <div class="project-overlay">
+          <div class="project-num">PROJ_004 · 2026</div>
+          <div class="project-name">Sun and Star</div>
+          <div class="project-tag">Venue · Visual · Design</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">PROJ_004 · 2026</div>
+          <div class="project-name">Sun & Star</div>
+          <p class="project-detail">Visual-first. Story-driven. Sun & Stars, unfolding — where light meets motion, and every scroll reveals a new chapter.</p>
+          <a href="https://www.figma.com/design/30GO4FiGWl9nsBJ7nueTXf/Sun---Star?node-id=0-1&p=f&t=b8rInUaZ2VwOr1FS-0" target="_blank" rel="noopener noreferrer" class="project-link">View Design →</a>
+        </div>
+        <div class="barcode project-barcode">Sun&Star</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE WEBSITES -->
+  <div id="tab-websites" class="tab-content">
+    <div class="projects-grid">
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="Designers Co">
+        <div class="project-overlay">
+          <div class="project-num">SITE_001 · LIVE</div>
+          <div class="project-name">Designers' Co.</div>
+          <div class="project-tag">Home Renovation · HTML/CSS · Live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">SITE_001 · LIVE</div>
+          <div class="project-name">Designers' Co.</div>
+          <p class="project-detail">A polished home renovation agency site — bold typography, service showcases and immersive visual language.</p>
+          <a href="https://kgosi-moagi.github.io/Designers-Co/#" target="_blank" rel="noopener" class="project-link">Visit Live Site →</a>
+        </div>
+        <div class="barcode project-barcode">DESIGNERSCO</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://i.pinimg.com/736x/95/d9/8e/95d98ee8ecd53da47fcef05b4d07e664.jpg" alt="Artisans Vault">
+        <div class="project-overlay">
+          <div class="project-num">SITE_002 · LIVE</div>
+          <div class="project-name">The Artisans Vault</div>
+          <div class="project-tag">Luxury Store · E-Commerce · Live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">SITE_002 · LIVE</div>
+          <div class="project-name">The Artisans Vault</div>
+          <p class="project-detail">A luxury designer item store with editorial product presentation and a refined, minimal aesthetic.</p>
+          <a href="https://kgosi-moagi.github.io/The-Vault/index.html" target="_blank" rel="noopener" class="project-link">Visit Live Site →</a>
+        </div>
+        <div class="barcode project-barcode">THEVAULT</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=600&q=80" alt="Pine City Zoo">
+        <div class="project-overlay">
+          <div class="project-num">SITE_003 · LIVE</div>
+          <div class="project-name">Pine City Zoo</div>
+          <div class="project-tag">Zoological · Immersive · Live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">SITE_003 · LIVE</div>
+          <div class="project-name">Pine City Zoo</div>
+          <p class="project-detail">A vibrant, immersive zoo website featuring dynamic animal showcases, visitor info and rich nature visuals.</p>
+          <a href="https://kgosi-moagi.github.io/Pine-City-Zoo/index.html" target="_blank" rel="noopener" class="project-link">Visit Live Site →</a>
+        </div>
+        <div class="barcode project-barcode">PINECITYZOO</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600&q=80" alt="Logoisum">
+        <div class="project-overlay">
+          <div class="project-num">SITE_004 · LIVE</div>
+          <div class="project-name">Logoisum</div>
+          <div class="project-tag">Education · Platform · Live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">SITE_004 · LIVE</div>
+          <div class="project-name">Logoisum</div>
+          <p class="project-detail">An educational platform built for clarity and engagement — structured learning pathways with a clean, modern interface.</p>
+          <a href="https://kgosi-moagi.github.io/logoisum/" target="_blank" rel="noopener" class="project-link">Visit Live Site →</a>
+        </div>
+        <div class="barcode project-barcode">LOGOISUM</div>
+      </div>
+      <div class="project-card">
+        <img class="project-img" src="https://images.unsplash.com/photo-1557952138-7ed256c23bc5?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"" alt="Freshbites-Bakery">
+        <div class="project-overlay">
+          <div class="project-num">SITE_005 · LIVE</div>
+          <div class="project-name">Freshbites Bakery</div>
+          <div class="project-tag">Food · E-commerce · Live</div>
+        </div>
+        <div class="project-overlay-full">
+          <div class="project-num">SITE_005 · LIVE</div>
+          <div class="project-name">Freshbites Bakery</div>
+          <p class="project-detail">Great bakery elevated. Warm, ingredient-forward, editorial layout with seamless order flow.</p>
+          <a href="https://kgosi-moagi.github.io/FreshBites-Bakery/" target="_blank" rel="noopener" class="project-link">Visit Live Site →</a>
+        </div>
+        <div class="barcode project-barcode">FreshbitesBakery</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack-barcode-row">
+    <span>SELECTEDWORKS2025</span>
+    <span>KGMPORTFOLIO</span>
+    <span>DIGITALMASTER</span>
+  </div>
+</section>
+
+<!-- ══ PROCESS ══ -->
+<section id="process">
+  <div class="section-label">003 · Methodology</div>
+  <h2 class="section-title reveal">The <span class="italic gold">Atelier</span> Method</h2>
+  <p class="section-intro reveal reveal-delay-1">Borrowed from the Renaissance masters — refined for the digital age. Every project follows an ancient-modern discipline.</p>
+  <div class="process-grid reveal">
+    <div class="process-item">
+      <img class="process-hover-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/400px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg" alt="">
+      <div class="process-content">
+        <span class="process-num">01</span>
+        <div class="process-title">Discovery</div>
+        <p class="process-text">Understand the soul of the project. Unearthing intention before a single pixel is placed — like a master studying the subject before lifting the brush.</p>
+        <div class="barcode process-barcode">DISCOVERY</div>
+      </div>
+    </div>
+    <div class="process-item">
+      <img class="process-hover-img" src="https://i.pinimg.com/1200x/65/c5/8d/65c58d45b76a3cc74f76bde60f4ca381.jpg" alt="">
+      <div class="process-content">
+        <span class="process-num">02</span>
+        <div class="process-title">Architecture</div>
+        <p class="process-text">Blueprint the experience. Wireframes, sitemaps, interaction maps. The skeleton must be flawless before flesh is applied to the canvas.</p>
+        <div class="barcode process-barcode">STRUCTURE</div>
+      </div>
+    </div>
+    <div class="process-item">
+      <img class="process-hover-img" src="https://i.pinimg.com/736x/b5/47/91/b54791c9a9594a02a6264d3c0802275f.jpg" alt="">
+      <div class="process-content">
+        <span class="process-num">03</span>
+        <div class="process-title">Creation</div>
+        <p class="process-text">Where craft meets code. Typography set with intention, motion scripted like choreography. The canvas comes alive with controlled precision.</p>
+        <div class="barcode process-barcode">CREATION</div>
+      </div>
+    </div>
+    <div class="process-item">
+      <img class="process-hover-img" src="https://i.pinimg.com/736x/9a/7a/f5/9a7af50899f26dde621880145d46d4d8.jpg" alt="">
+      <div class="process-content">
+        <span class="process-num">04</span>
+        <div class="process-title">Delivery</div>
+        <p class="process-text">Performance, accessibility, cross-device — obsessively verified. Then launched, like a masterwork hung in the most prestigious gallery.</p>
+        <div class="barcode process-barcode">DELIVERY</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REEL -->
+<!--<div id="reel">
+  <div class="reel-inner">
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80" alt=""><div class="reel-item-label">Designers' Co. · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" alt=""><div class="reel-item-label">The Artisans Vault · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=400&q=80" alt=""><div class="reel-item-label">Pine City Zoo · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=400&q=80" alt=""><div class="reel-item-label">Logoisum · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt=""><div class="reel-item-label">Aurum · Design</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" alt=""><div class="reel-item-label">Ether Studio · Design</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80" alt=""><div class="reel-item-label">Designers' Co. · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" alt=""><div class="reel-item-label">The Artisans Vault · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=400&q=80" alt=""><div class="reel-item-label">Pine City Zoo · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=400&q=80" alt=""><div class="reel-item-label">Logoisum · Live</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt=""><div class="reel-item-label">Aurum · Design</div></div>
+    <div class="reel-item"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" alt=""><div class="reel-item-label">Ether Studio · Design</div></div>
+  </div>
+</div>-->
+
+<!-- ══ PHILOSOPHY ══ -->
+<section id="philosophy">
+  <div class="philosophy-left">
+    <div class="philosophy-img-wrap">
+      <img class="philosophy-img" src="https://i.pinimg.com/736x/c3/b8/97/c3b897b8c6ff185718fb5a522c94d1cb.jpg" alt="School of Athens">
+      <div class="philosophy-img-border"></div>
+      <div class="philosophy-img-ornament">ARTISAN_KGM</div>
+      <div class="philosophy-stats">
+        <span class="stat-num glitch" data-text="5+">5+</span>
+        <span class="stat-label">Live Projects</span>
+      </div>
+    </div>
+  </div>
+  <div class="philosophy-right">
+    <div class="section-label reveal">001 · Philosophy</div>
+    <blockquote class="philosophy-quote reveal reveal-delay-1">Art is never finished, only abandoned — until it ships.</blockquote>
+    <p class="philosophy-body reveal reveal-delay-2">
+      The Renaissance was the last time humanity fused deep technical mastery with profound artistic vision. I am obsessed with recapturing that duality — where the engineer and the painter are the same person, staring at the same canvas.
+      <br><br>
+      My name is Kgosi Moagi. Every site I build carries the weight of intention. Typography chosen like pigments. Interactions designed like choreography. Code written like a manuscript — precise, legible, and permanent.
+    </p>
+    <div class="philosophy-tags reveal reveal-delay-3">
+      <span class="tag">Web Design</span>
+      <span class="tag">Creative Dev</span>
+      <span class="tag">Motion Design</span>
+      <span class="tag">Brand Systems</span>
+      <span class="tag">Webflow</span>
+      <span class="tag">HTML / CSS / JS</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ STACK ══ -->
+<section id="stack">
+  <div class="section-label reveal">004 · Arsenal</div>
+  <h2 class="section-title reveal">
+    <span class="glitch" data-text="TOOLS_OF">TOOLS_OF</span>_<span class="italic gold">The Craft</span>
+  </h2>
+  <div class="stack-grid reveal">
+    <div class="stack-item"><div class="stack-icon">▣</div><div class="stack-name">Webflow</div></div>
+    <div class="stack-item"><div class="stack-icon">◎</div><div class="stack-name">GSAP / Motion</div></div>
+    <div class="stack-item"><div class="stack-icon">⬡</div><div class="stack-name">Three.js / WebGL</div></div>
+    <div class="stack-item"><div class="stack-icon">◈</div><div class="stack-name">Figma / Design</div></div>
+    <div class="stack-item"><div class="stack-icon">◆</div><div class="stack-name">HTML / CSS / JS</div></div>
+    <div class="stack-item"><div class="stack-icon">⬡</div><div class="stack-name">Shopify / Liquid</div></div>
+    <div class="stack-item"><div class="stack-icon">◎</div><div class="stack-name">Framer</div></div>
+    <div class="stack-item"><div class="stack-icon">◈</div><div class="stack-name">GitHub Pages</div></div>
+  </div>
+  <div class="stack-barcode-row">
+    <span>WEBFLOW_GSAP_CRAFT</span>
+    <span>KGM_DIGITAL_ARTISAN</span>
+    <span>FIGMA_FRAMER_CODE</span>
+    <span>KGOSI_MOAGI_2025</span>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section id="contact">
+  <div class="contact-barcode-bg">
+    <span>COMMISSION</span><span>KGMPORTFOLIO2025</span><span>DIGITAL</span><span>ARTISAN</span><span>RENAISSANCE</span><span>COMMISSION</span><span>KGMPORTFOLIO2025</span>
+  </div>
+  <div class="contact-eyebrow">005 · Contact</div>
+  <h2 class="contact-title">
+    <span class="glitch" data-text="Let's Create">Let's Create</span>
+  </h2>
+  <p class="contact-sub">Commission a masterwork for your brand</p>
+  <a href="mailto:kgmwebsite@gmail.com" class="contact-email">kgmwebsite@gmail.com</a>
+  <div class="contact-actions">
+  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=kgmwebsite@gmail.com&su=Start+a+Project" class="btn-primary" target="_blank" rel="noopener noreferrer">
+    Start a Project
+  </a>
+    <a href="#projects" class="btn-ghost">View Work</a>
+  </div>
+  <div class="ornament-divider" style="margin-top:5rem"><div class="ornament-symbol">✦ KGM ✦</div></div>
+  <div class="barcode" style="font-size:2.5rem;margin-top:1rem;opacity:.12">KGM_KGOSI_MOAGI_DIGITAL_ARTISAN_2025</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="copy">© 2026 KGM · Kgosi Moagi · All Rights Reserved · Crafted with Obsession</span>
+  <span class="barcode" style="font-size:1.5rem">KGM2025</span>
+  <div class="social-links">
+    <a href="https://github.com/kgosi-moagi" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <a href="https://wa.me/27679574239" target="_blank" rel="noopener noreferrer">Whatsapp</a>
+    <a href="https://mail.google.com/" target="_blank" rel="noopener noreferrer">Gmail</a>
+  </div>
+</footer>
+
+<script>
+  /* CURSOR */
+  const cursor=document.getElementById('cursor'), ring=document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+  (function animRing(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing);})();
+  document.querySelectorAll('a,button,.project-card,.stack-item,.process-item').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cursor.style.transform='translate(-50%,-50%) scale(2.5)';ring.style.transform='translate(-50%,-50%) scale(1.5)';ring.style.opacity='0.8';});
+    el.addEventListener('mouseleave',()=>{cursor.style.transform='translate(-50%,-50%) scale(1)';ring.style.transform='translate(-50%,-50%) scale(1)';ring.style.opacity='0.5';});
+  });
+
+  /* MOBILE NAV */
+  function toggleMobileNav(){
+    const nav=document.getElementById('mobileNav'),b=document.getElementById('burger');
+    nav.classList.toggle('open');b.classList.toggle('open');
+    document.body.style.overflow=nav.classList.contains('open')?'hidden':'';
+  }
+  function closeMobileNav(){
+    document.getElementById('mobileNav').classList.remove('open');
+    document.getElementById('burger').classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  /* TABS */
+  function switchTab(name,btn){
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  /* REVEAL */
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}});
+  },{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  /* PARALLAX (desktop only) */
+  if(window.innerWidth>900){
+    const p=document.querySelector('.hero-painting');
+    window.addEventListener('scroll',()=>{if(p)p.style.transform=`scale(1.05) translateY(${window.scrollY*.15}px)`;});
+  }
+
+  
+
+  /* Pause reel animation on reduced motion */
+  /*if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    document.querySelectorAll('.marquee-inner,.reel-inner').forEach(el=>el.style.animationPlayState='paused');
+  }*/
+</script>
+
+
+
+</body>
+</html>
